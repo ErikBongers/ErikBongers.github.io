@@ -7,8 +7,8 @@ Furthermore, declarative macro's have their limitations. You can't build all mac
 
 Procedural macros, on the other hand, are build using regular rust code. But even in this case there 
 are often a lot of abstractions added to make the writing process quicker and easier. Many procedural 
-macros rely on the syn crate, which pre-parses tokens into higher level language constructs. In addition 
-to that, macros like `quote!` are used to write out the code the macro needs to generate as plain text.
+macros rely on the syn crate, which pre-parses tokens and condenses them into higher level language constructs. 
+In addition to that, macros like `quote!` are used to write out the code the macro needs to generate as plain text.
 
 All these abstractions allow you to create most macros quickly, but in each case, you have to learn these tools
 and you have to deal with the quirks and limitations that come with these.
@@ -17,7 +17,7 @@ Another disadvantage of these methods is that these extra layers of abstraction 
 process as each layer needs it's own build time.
 
 Learning how to write macros at the lowest possible level, gives you all the flexibility to write the most 
-demanding macros, while helping you to understand how rust manages macros under the hood (almost).
+demanding macros, while giving you better insight into how rust manages macros under the hood.
 
 ## Our tutorial macro
 The macro we will be building will allow us to generate an enum and a number of functions based on a 
@@ -26,8 +26,33 @@ This is what the macro usage will look like::
 ```
 define_errors!(
     WrongValue : E : "The value {value} is wrong.",
-    TooSmall : W : "Warning: the value {value} is smaller than {limit},
+    TooSmall : W : "Warning: the value {value} is smaller than {limit}",
 }
 ```
 Note that this macro does not contain valid rust syntax. We will be implementing our own syntax, 
 in the same way that an `sql!` macro accepts sql syntax. 
+In addition to that, the macro will scan the error message for `{place_holders}` that need to be replaced 
+with a format operation. These placeholders will be used as function arguments with the same name.
+
+The resulting code of the above macro statement will be:
+```
+pub enum ErrorId {
+    WrongValue,
+    TooSmall,
+}
+
+pub fn wrong_value(value: &str) -> Error {
+    Error {
+        id: ErrorId::WrongValue,
+        error_type: ErrorType::E,
+        message: format!("The value {value} is wrong.", value=value)
+    }
+}
+pub fn too_small(value: &str, limit: &str) -> Error {
+    Error {
+        id: ErrorId::TooSmall,
+        error_type: ErrorType::W,
+        message: format!(Warning: the value {value} is smaller than {limit}", value=value, limit=limit)
+    }
+}
+```
