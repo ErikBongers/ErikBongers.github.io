@@ -87,7 +87,7 @@ pub use macros_derive::print_tokens;
 ```
 
 If you haven't done so yet, set up a main project to use the macros and let's see what 
-the invocation of the macro will print for this small function:
+the invocation of the macro will print for this small function. In your `main()` function, add:
 ```rust
 print_tokens!(
     fn small_function(arg1: &str, arg2: Option<u32>) -> bool {
@@ -98,7 +98,47 @@ print_tokens!(
 );
 ```
 If you manually reformat the output a bit, you'll get something lke this:
-TODO: show the output.
+```
+TOKENSTREAM::
+TokenStream [
+    Ident { ident: "fn", span: #0 bytes(95..97) }, 
+    Ident { ident: "small_function", span: #0 bytes(98..112) }, 
+    Group { delimiter: Parenthesis, stream: TokenStream [ //a group is defined by it's opening delimiter. The closing one is implied.
+        Ident { ident: "arg1", span: #0 bytes(113..117) }, 
+        Punct { ch: ':', spacing: Alone, span: #0 bytes(117..118) }, 
+        Punct { ch: '&', spacing: Alone, span: #0 bytes(119..120) }, 
+        Ident { ident: "str", span: #0 bytes(120..123) }, 
+        Punct { ch: ',', spacing: Alone, span: #0 bytes(123..124) }, 
+        Ident { ident: "arg2", span: #0 bytes(125..129) }, 
+        Punct { ch: ':', spacing: Alone, span: #0 bytes(129..130) }, 
+        Ident { ident: "Option", span: #0 bytes(131..137) }, 
+        Punct { ch: '<', spacing: Alone, span: #0 bytes(137..138) }, //note how genaric params are not considered a Group.
+        Ident { ident: "u32", span: #0 bytes(138..141) }, 
+        Punct { ch: '>', spacing: Alone, span: #0 bytes(141..142) }
+        ], span: #0 bytes(112..143) 
+    }, 
+    Punct { ch: '-', spacing: Joint, span: #0 bytes(144..145) }, 
+    Punct { ch: '>', spacing: Alone, span: #0 bytes(145..146) }, 
+    Ident { ident: "bool", span: #0 bytes(147..151) }, 
+    Group { delimiter: Brace, stream: TokenStream [
+        Ident { ident: "let", span: #0 bytes(162..165) }, 
+        Ident { ident: "message", span: #0 bytes(166..173) }, 
+        Punct { ch: '=', spacing: Alone, span: #0 bytes(174..175) }, 
+        Literal { kind: Str, symbol: "The message", suffix: None, span: #0 bytes(176..189) }, 
+        Punct { ch: ';', spacing: Alone, span: #0 bytes(189..190) }, 
+        Ident { ident: "let", span: #0 bytes(199..202) }, 
+        Ident { ident: "i", span: #0 bytes(203..204) }, 
+        Punct { ch: '=', spacing: Alone, span: #0 bytes(205..206) }, 
+        Ident { ident: "i32", span: #0 bytes(207..210) }, 
+        Punct { ch: ':', spacing: Joint, span: #0 bytes(210..211) }, //the double collon are 2 separate Puncts, that are `Joint`.
+        Punct { ch: ':', spacing: Alone, span: #0 bytes(211..212) }, 
+        Ident { ident: "MIN_VALUE", span: #0 bytes(212..221) }, 
+        Punct { ch: ';', spacing: Alone, span: #0 bytes(221..222) }, 
+        Ident { ident: "true", span: #0 bytes(231..235) }
+        ], span: #0 bytes(152..241) 
+    }
+]
+```
 
 Our `small_function` has been converted from plain text to a stream of Tokens, or more specifically, 
 a stream of `enum TokenTree`variants. All possible tokens can be represented with this surprisingly short enum:
