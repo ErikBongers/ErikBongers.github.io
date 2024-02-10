@@ -1,6 +1,7 @@
 # Building a low level macro in rust
 {:.no_toc}
 ## Table on contents
+{:.no_toc}
 * TOC
 {:toc}
 
