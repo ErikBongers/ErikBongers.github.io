@@ -195,7 +195,36 @@ pub enum ErrorId {
     //content of macro.
 }
 ```
-In tokens, that would be 3 `Ident`s and ` `Group`.
+In tokens, that would be 3 `Ident`s and a `Group` containing the original `TokenStream`.
+```rust
+#[proc_macro]
+pub fn define_errors(input: TokenStream) -> TokenStream {
+    let mut output = TokenStream::from_str("pub enum ErrorId").unwrap();
+    output.extend([
+        TokenTree::Group(Group::new(Delimiter::Brace, input))
+    ]);
+    output
+}
+```
+We are taking a couple of shortcuts here. First, we are using the string `"pub enum ErrorId` as 
+source for a TokenStream. This means it needs to be parsed into tokens at runtime...well, at compile time, I guess.
+If you really want to optimize for speed, you would not feed a string to a TokenStream but individual tokens.
+Secondly, we are just feeding the input stream directly into the output. In this simple example we can get away with it.
+
+## Debugging
+In order to assess if the above macro works as intended, we can use it in our main project. If you don't get
+any compilation errors, that's a big step, but that doesn't mean the macro generated exactly what we intended.
+Unfortunately, debugging a macro is not easy. You can't run it in debug mode, since our code is executed by the compiler.
+
+### Cargo expand
+The best way to look at what the macro generated is using `cargo expand`. You'll need to install the `cargo-expand` 
+extension.
+```shell
+cargo install cargo-expand
+```
+If you then compile with `cargo expand` instead of `cargo build`, you'll get a compiler output containing 
+all macros expanded. Since all macros are expanded, it's a good idea to build your macro in a small sandbox project,
+before you add it to your actual project.
 
 ## Parsing the error definitions
 todo
