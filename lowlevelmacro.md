@@ -1,7 +1,7 @@
 # Building a low level macro in rust
 
 1. The generated Toc will be an ordered list
-   {:toc}
+{:toc}
 
 ## Introduction
 Macros in rust can be created in various ways. Declarative macros use the `macro_rules!` macro 
