@@ -1,4 +1,5 @@
 toc : true
 
-plugins:
-  - jekyll-toc
+gems:
+    plugins:
+        - jekyll-toc
