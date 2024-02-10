@@ -1,0 +1,3 @@
+* left margin TOC
+  > use custom workflow or javascripta?
+    https://stackoverflow.com/questions/76934326/github-pages-automatic-table-of-contents-on-a-page-with-jekyll-theme-minimal-or

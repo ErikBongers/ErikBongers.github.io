@@ -82,7 +82,6 @@ In your `macros/macros_derive/src/lib.rs` file, add this macro:
 ```rust
 #[proc_macro]
 pub fn print_tokens(input: TokenStream) -> TokenStream {
-    println!("TOKENSTREAM::");
     println!("{:?}", input);
     TokenStream::new()
 }
@@ -107,13 +106,13 @@ print_tokens!(
 
 ### Analyzing the input TokenStream
 
-If you manually reformat the output a bit, you'll get something lke this. I've added some comments.
+If you manually reformat the output a bit, you'll get something lke this. This looks like a lot, but if you read line
+by line, you'll quickly find out it's quite a straightforward translation of the input. I've also added some comments in some places.
 ```
-TOKENSTREAM::
 TokenStream [
     Ident { ident: "fn", span: #0 bytes(95..97) }, 
     Ident { ident: "small_function", span: #0 bytes(98..112) },
-       //a group is defined by it's opening delimiter. The closing one is implied. 
+       //[ed.] A group is defined by it's opening delimiter '('. The closing one ')' is implied. 
     Group { delimiter: Parenthesis, stream: TokenStream [ 
         Ident { ident: "arg1", span: #0 bytes(113..117) }, 
         Punct { ch: ':', spacing: Alone, span: #0 bytes(117..118) }, 
@@ -123,13 +122,13 @@ TokenStream [
         Ident { ident: "arg2", span: #0 bytes(125..129) }, 
         Punct { ch: ':', spacing: Alone, span: #0 bytes(129..130) }, 
         Ident { ident: "Option", span: #0 bytes(131..137) }, 
-          //note how genaric params are not considered a Group.
+          //[ed.] Note how genaric params are not considered a Group.
         Punct { ch: '<', spacing: Alone, span: #0 bytes(137..138) }, 
         Ident { ident: "u32", span: #0 bytes(138..141) }, 
         Punct { ch: '>', spacing: Alone, span: #0 bytes(141..142) }
         ], span: #0 bytes(112..143) 
     }, 
-        //the double collon are 2 separate Puncts, that are `Joint`.
+        //[ed.] The double collon are 2 separate Puncts, that are `Joint`.
     Punct { ch: '-', spacing: Joint, span: #0 bytes(144..145) }, 
     Punct { ch: '>', spacing: Alone, span: #0 bytes(145..146) }, 
     Ident { ident: "bool", span: #0 bytes(147..151) }, 
@@ -183,8 +182,30 @@ the above output.
 ## Building the enum
 
 Our goal is to create a macro that generates an enum and functions from error definitions.
-Let's start with the enum.
+Let's start with a simplified macro that will just create an enum.
+```
+define_errors!(
+    WrongValue,
+    TooSmall,
+)
+```
+In this version, we simply have to wrap the content of the macro call with
+```rust
+pub enum ErrorId {
+    //content of macro.
+}
+```
+In tokens, that would be 3 `Ident`s and ` `Group`.
 
-## TODO
+## Parsing the error definitions
+todo
+## Handling parsing errors.
+todo
+## Building the functions.
+todo
+
+## Improvements
+Here are some improvements you could make to the macro we built:
 * Possible exercises: add `#[inline]` to the functions.
 * The enum and functions are `pub`. Perhaps make this customizable.
+* The name of the enum is currently hard coded. Make this user-defined.
