@@ -1,4 +1,7 @@
 # Building a low level macro in rust
+
+{:toc}
+
 ## Introduction
 Macros in rust can be created in various ways. Declarative macros use the `macro_rules!` macro 
 to generate a macro based on pattern matching. The disadvantage of this method that it requires you 
@@ -69,7 +72,7 @@ Our project should have a `macro` lib crate, a `macro_derive` lib crate
 and a `main` or `test` binary crate to try out our macros.
 
 ## TokenStream and TokenTree
-
+### Creating a print_token macro
 In your `macros/macros_derive/src/lib.rs` file, add this macro:
 
 ```rust
@@ -97,13 +100,17 @@ print_tokens!(
     }
 );
 ```
-If you manually reformat the output a bit, you'll get something lke this:
+
+### Analyzing the input TokenStream
+
+If you manually reformat the output a bit, you'll get something lke this. I've added some comments.
 ```
 TOKENSTREAM::
 TokenStream [
     Ident { ident: "fn", span: #0 bytes(95..97) }, 
-    Ident { ident: "small_function", span: #0 bytes(98..112) }, 
-    Group { delimiter: Parenthesis, stream: TokenStream [ //a group is defined by it's opening delimiter. The closing one is implied.
+    Ident { ident: "small_function", span: #0 bytes(98..112) },
+       //a group is defined by it's opening delimiter. The closing one is implied. 
+    Group { delimiter: Parenthesis, stream: TokenStream [ 
         Ident { ident: "arg1", span: #0 bytes(113..117) }, 
         Punct { ch: ':', spacing: Alone, span: #0 bytes(117..118) }, 
         Punct { ch: '&', spacing: Alone, span: #0 bytes(119..120) }, 
@@ -112,11 +119,13 @@ TokenStream [
         Ident { ident: "arg2", span: #0 bytes(125..129) }, 
         Punct { ch: ':', spacing: Alone, span: #0 bytes(129..130) }, 
         Ident { ident: "Option", span: #0 bytes(131..137) }, 
-        Punct { ch: '<', spacing: Alone, span: #0 bytes(137..138) }, //note how genaric params are not considered a Group.
+          //note how genaric params are not considered a Group.
+        Punct { ch: '<', spacing: Alone, span: #0 bytes(137..138) }, 
         Ident { ident: "u32", span: #0 bytes(138..141) }, 
         Punct { ch: '>', spacing: Alone, span: #0 bytes(141..142) }
         ], span: #0 bytes(112..143) 
     }, 
+        //the double collon are 2 separate Puncts, that are `Joint`.
     Punct { ch: '-', spacing: Joint, span: #0 bytes(144..145) }, 
     Punct { ch: '>', spacing: Alone, span: #0 bytes(145..146) }, 
     Ident { ident: "bool", span: #0 bytes(147..151) }, 
@@ -130,7 +139,7 @@ TokenStream [
         Ident { ident: "i", span: #0 bytes(203..204) }, 
         Punct { ch: '=', spacing: Alone, span: #0 bytes(205..206) }, 
         Ident { ident: "i32", span: #0 bytes(207..210) }, 
-        Punct { ch: ':', spacing: Joint, span: #0 bytes(210..211) }, //the double collon are 2 separate Puncts, that are `Joint`.
+        Punct { ch: ':', spacing: Joint, span: #0 bytes(210..211) },
         Punct { ch: ':', spacing: Alone, span: #0 bytes(211..212) }, 
         Ident { ident: "MIN_VALUE", span: #0 bytes(212..221) }, 
         Punct { ch: ';', spacing: Alone, span: #0 bytes(221..222) }, 
@@ -154,12 +163,23 @@ pub enum TokenTree {
 The reason this enum is called a `TokenTree` and not just `Token`, is because the `Group` variant nests a deeper
 level TokenStream, thus resulting in a tree structure.
 
-### Analyzing the TokenStream
 * `Ident`: All alphabetic 'words' are represented as `Ident`, including keywords lke `fn` or type names like `u32`.
 * `Punct`: Special characters are represented as `Punct`. This includes `&`, commas, dots,... Note that `::` is represented by 2 separate punctuations!
 * `Literal`: In our case we have 2 literals: a string and a number.
 * `Group`: Everything that is placed between braces, brackets and parenthesis, are placed in a `Group`.
 
+If you haven't written any macros yet, take a look at the signature of the `print_tokens()` macro function:
+```rust
+fn print_tokens(input: TokenStream) -> TokenStream {}
+```
+It takes a `TokenStream` as input and returns an output `TokenStream`. That's it. This means that if we understand 
+how the rust compiler creates `TokenStream`s, we will be able to create our own. So, take some time to analyze
+the above output.
+
+## Building the enum
+
+Our goal is to create a macro that generates an enum and functions from error definitions.
+Let's start with the enum.
 
 ## TODO
 * Possible exercises: add `#[inline]` to the functions.
