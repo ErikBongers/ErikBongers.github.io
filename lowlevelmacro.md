@@ -1,6 +1,7 @@
 # Building a low level macro in rust
-
-1. The generated Toc will be an ordered list
+{:.no_toc}
+## Table on contents
+* TOC
 {:toc}
 
 ## Introduction
@@ -44,6 +45,7 @@ pub enum ErrorId {
     WrongValue,
     TooSmall,
 }
+
 
 pub fn wrong_value(value: &str) -> Error {
     Error {
