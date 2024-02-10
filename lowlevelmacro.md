@@ -89,16 +89,21 @@ pub use macros_derive::print_tokens;
 If you haven't done so yet, set up a main project to use the macros and let's see what 
 the invocation of the macro will print for this small function:
 ```rust
-fn small_function(arg1: &str, arg2: Option<u32>) -> bool {
-    true
-}
+print_tokens!(
+    fn small_function(arg1: &str, arg2: Option<u32>) -> bool {
+        let message = "The message";
+        let i = i32::MIN_VALUE;
+        true
+    }
+);
 ```
+If you manually reformat the output a bit, you'll get something lke this:
 TODO: show the output.
 
 Our `small_function` has been converted from plain text to a stream of Tokens, or more specifically, 
 a stream of `enum TokenTree`variants. All possible tokens can be represented with this surprisingly short enum:
 ```rust
-//  proc_macro::
+//  proc_macro:
 pub enum TokenTree {
     Group(Group),
     Ident(Ident),
@@ -106,8 +111,15 @@ pub enum TokenTree {
     Literal(Literal),
 }
 ```
-The reason this is called a `TokenTree` and not just `Token`, is because the `Group` variant nests a deeper
+The reason this enum is called a `TokenTree` and not just `Token`, is because the `Group` variant nests a deeper
 level TokenStream, thus resulting in a tree structure.
+
+### Analyzing the TokenStream
+* `Ident`: All alphabetic 'words' are represented as `Ident`, including keywords lke `fn` or type names like `u32`.
+* `Punct`: Special characters are represented as `Punct`. This includes `&`, commas, dots,... Note that `::` is represented by 2 separate punctuations!
+* `Literal`: In our case we have 2 literals: a string and a number.
+* `Group`: Everything that is placed between braces, brackets and parenthesis, are placed in a `Group`.
+
 
 ## TODO
 * Possible exercises: add `#[inline]` to the functions.
