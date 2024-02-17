@@ -187,7 +187,7 @@ Let's start with a simplified macro that will just create an enum.
 define_errors!(
     WrongValue,
     TooSmall,
-)
+);
 ```
 In this version, we simply have to wrap the content of the macro call with
 ```rust
@@ -212,22 +212,93 @@ If you really want to optimize for speed, you would not feed a string to a Token
 Secondly, we are just feeding the input stream directly into the output. In this simple example we can get away with it.
 
 ## Debugging
+Unfortunately, debugging a macro is not easy. You can't run it in debug mode, since our code is executed by the compiler.
+Here are some strategies for debugging.
+
+### Just use it?
+
 In order to assess if the above macro works as intended, we can use it in our main project. If you don't get
 any compilation errors, that's a big step, but that doesn't mean the macro generated exactly what we intended.
-Unfortunately, debugging a macro is not easy. You can't run it in debug mode, since our code is executed by the compiler.
 
 ### Cargo expand
-The best way to look at what the macro generated is using `cargo expand`. You'll need to install the `cargo-expand` 
+
+The best way to look at what the macro generated is using `cargo expand`. You'll need to install the `cargo-expand`
 extension.
 ```shell
 cargo install cargo-expand
 ```
-If you then compile with `cargo expand` instead of `cargo build`, you'll get a compiler output containing 
+If you then compile with `cargo expand` instead of `cargo build`, you'll get a compiler output containing
 all macros expanded. Since all macros are expanded, it's a good idea to build your macro in a small sandbox project,
 before you add it to your actual project.
 
+### print!
+
+We still have the `print_tokens!` macro that we used to print the input `TokenStream`. We could also use it 
+to print the output stream. 
+
 ## Parsing the error definitions
-todo
+
+Our basic version of the macro is able to output an enum, so lets do that again but with the long error 
+definitions in the macro.
+
+```
+define_errors!(
+    WrongValue : E : "The value {value} is wrong.",
+    TooSmall : W : "Warning: the value {value} is smaller than {limit}",
+);
+```
+We can no longer simply insert the input into the output `TokenStream`, so let's parse the error definitions.
+Each definition has a form 
+```
+ <error_id> : <error_type> : "error message."
+```
+The first error definition we have should produce these tokens:
+```
+Ident(WrongValue)
+Punct(':')
+Ident(E)
+Punct(':')
+Literal("The value {value} is wrong.")
+```
+Let's create a function to read those from the input stream.
+
+```rust
+struct CompilerError;
+
+fn have_read_one_error(input: &mut Peekable<IntoIter>) -> Result<bool, CompilerError> {
+    let Some(error_id_token) = input.next() else { return Ok(false); };
+    let TT::Ident(error_id) = &error_id_token else { return Ok(false); };
+    let Some(_colon) = input.next() else { return Ok(false); };
+    let Some(error_type_token) = input.next() else { return Ok(false); };
+    let TT::Ident(error_type) = &error_type_token else { return Ok(false); };
+    let Some(_colon) = input.next() else { return Ok(false); };
+    let Some(message_token) = input.next() else { return Ok(false); };
+    let TT::Literal(message) = &message_token else { return Ok(false); };
+
+    if let Some(_comma) = input.peek() {
+        input.next();
+    }
+    Ok(true)
+}
+```
+In this first version of the function we try to parse all the expected tokens for one error definition, including
+an optional comma.
+We'll ignore the  `Result<bool, CompilerError>` return value for now, as we're not handling parsing errors yet.
+In or main macro function we'll loop until all definitions are parsed.
+```rust
+pub fn define_errors(input: TokenStream) -> TokenStream {
+    let mut it = input.into_iter().peekable();
+
+    loop {
+        match have_read_one_error(&mut it) {
+            Ok(not_finished) => { if !not_finished { break; } },
+            Err(compiler_error) => { todo!() }
+        }
+    }
+    TokenStream::new() //return nothing for now.
+}
+
+```
 ## Handling parsing errors.
 todo
 ## Building the functions.
